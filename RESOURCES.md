@@ -10,6 +10,12 @@
   Erklärt, wann der Agent selbstständig handelt oder nachfragt. Verwenden für: sichere Wahl zwischen Supervised, Auto-accept edits, Auto und Full access.
 - [T3 Code: Source-Control-Integrationen](https://github.com/pingdotgg/t3code/blob/main/docs/user/source-control.md)
   Offizielle Anleitung für GitHub, GitLab, Bitbucket und Azure DevOps. Verwenden für: Branches, Reviews und Pull Requests.
+- [GitHub CLI: `gh auth login`](https://cli.github.com/manual/gh_auth_login)
+  Offizielle Anmeldung der GitHub CLI und Auswahl des Git-Protokolls. Verwenden für: den dedizierten Agent-Account im Container.
+- [GitHub CLI: Umgebungsvariablen](https://cli.github.com/manual/gh_help_environment)
+  Dokumentiert insbesondere `GH_CONFIG_DIR`. Verwenden für: isolierte, dauerhafte GitHub-Credentials im eigenen Docker-Volume.
+- [GitHub CLI: offizielle Linux-Installation](https://github.com/cli/cli/blob/trunk/docs/install_linux.md)
+  Offizielles Debian-Repository, Signaturschlüssel und Installationsschritte. Verwenden für: eine von T3 unterstützte aktuelle `gh`-Version im Container.
 - [T3 Code: Tastenkürzel](https://github.com/pingdotgg/t3code/blob/main/docs/user/keybindings.md)
   Referenz für Navigation, Datei- und Projektsuche sowie eigene Shortcuts. Verwenden für: flüssigeres Arbeiten.
 - [T3 Code: Architekturüberblick](https://github.com/pingdotgg/t3code/blob/main/docs/internals/overview.md)
