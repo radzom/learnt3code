@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lektion 3: Die Policy auf Docker abbilden</title>
+  <link rel="stylesheet" href="../assets/course.css">
+</head>
+<body>
+<main>
+  <p class="eyebrow">Lektion 3 · etwa 8 Minuten</p>
+  <h1>Die Policy auf Docker abbilden</h1>
+  <p class="lede">Dein Gewinn: Du kannst für jeden erlaubten Speicherbereich das richtige Docker-Werkzeug begründen.</p>
+
+  <h2>Vier Speicherarten, vier Aufgaben</h2>
+  <table>
+    <thead><tr><th>Anforderung</th><th>Docker-Werkzeug</th><th>Warum?</th></tr></thead>
+    <tbody>
+      <tr><td>Quellcode auf dem Host bearbeiten</td><td>Bind Mount</td><td>Änderungen sind auf Host und Container sichtbar.</td></tr>
+      <tr><td>T3-Zustand behalten</td><td>Named Volume</td><td>Beständig, aber kein beliebiger Hostpfad wird freigegeben.</td></tr>
+      <tr><td>Codex-Anmeldung behalten</td><td>Named Volume</td><td><code>CODEX_HOME</code> bleibt isoliert und kann Token aktualisieren.</td></tr>
+      <tr><td>Temporäre Dateien</td><td>tmpfs</td><td>Schreibbar, flüchtig und nicht im Hostprojekt gespeichert.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Warum das Codex-Volume schreibbar ist</h2>
+  <p>Die offiziellen OpenAI Docs erklären, dass Codex Anmeldedaten unter <code>CODEX_HOME</code> speichern kann und ChatGPT-Tokens während aktiver Sitzungen automatisch aktualisiert. Ein nur lesbares Credential-Volume könnte deshalb später eine funktionierende Anmeldung blockieren. Die Sicherheitsgrenze entsteht hier durch das <strong>eigene Volume</strong>, nicht durch Read-only.</p>
+
+  <h2>Warum der T3-Server mit hinein muss</h2>
+  <p>Der T3-Server startet Codex und besitzt auch Terminal-, Git- und Dateisystemzugriffe. Würde nur Codex containerisiert, könnten andere T3-Funktionen weiterhin außerhalb der gewünschten Grenze laufen.</p>
+
+  <section class="quiz" data-quiz data-feedback-correct="Richtig. Jeder erlaubte Zustand erhält genau den kleinsten passenden Speicherbereich." data-feedback-wrong="Noch nicht. Breite Host-Mounts oder der Docker-Socket würden die Allowlist umgehen.">
+    <h2>Abrufübung</h2>
+    <p>Welche Konfiguration bildet unsere Allowlist am besten ab?</p>
+    <div class="answers">
+      <button type="button">Host-Home einbinden und mit Dateirechten teilweise beschränken.</button>
+      <button type="button" data-correct="true">Projekt einbinden und übrige Zustände separat speichern.</button>
+      <button type="button">Docker-Socket einbinden und Containerbefehle sorgfältig vollständig protokollieren.</button>
+    </div>
+    <p class="feedback" aria-live="polite"></p>
+  </section>
+
+  <h2>Im Workspace umgesetzt</h2>
+  <p>Öffne <code>compose.yaml</code> und ordne jede Zeile unter <code>volumes</code> einem Eintrag deiner Allowlist zu. Der automatische Test unter <code>scripts/verify-container.sh</code> überprüft anschließend die tatsächlich laufende Konfiguration.</p>
+
+  <h2>Deine Abruffrage</h2>
+  <p>Warum ist das Codex-Volume schreibbar, obwohl es geheime Anmeldedaten enthält? Antworte ohne nachzusehen in einem Satz.</p>
+
+  <p><strong>Primärquellen:</strong> <a href="https://learn.chatgpt.com/docs/auth">OpenAI Docs: Codex authentication</a> und <a href="https://github.com/pingdotgg/t3code/blob/main/docs/internals/overview.md">T3 Code Architecture</a>.</p>
+  <p><a href="../reference/codex-container-architecture.html">Architektur-Kurzreferenz öffnen</a> · <a href="0002-sicherheit-messbar-machen.html">Zurück zu Lektion 2</a></p>
+</main>
+<script src="../assets/quiz.js"></script>
+</body>
+</html>

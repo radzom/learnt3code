@@ -1,0 +1,59 @@
+name: t3-codex-sandbox
+
+services:
+  t3-codex:
+    image: local/t3-codex:0.0.33-codex-0.149.0
+    build:
+      context: ./container
+      args:
+        NODE_VERSION: "24.19.0"
+        T3_VERSION: "0.0.33"
+        CODEX_VERSION: "0.149.0"
+    environment:
+      HOME: /home/agent
+      T3CODE_HOME: /var/lib/t3
+      CODEX_HOME: /var/lib/codex
+      NPM_CONFIG_CACHE: /tmp/npm-cache
+    ports:
+      - name: t3-web
+        target: 3773
+        published: "${T3_PORT:-3774}"
+        host_ip: 127.0.0.1
+        protocol: tcp
+    volumes:
+      - type: bind
+        source: "${T3_PROJECT_PATH:-.}"
+        target: /workspace
+        bind:
+          create_host_path: false
+      - type: volume
+        source: t3-state
+        target: /var/lib/t3
+      - type: volume
+        source: codex-state
+        target: /var/lib/codex
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=512m,uid=10001,gid=10001,mode=1777
+    read_only: true
+    user: "10001:10001"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 512
+    restart: "no"
+    stop_grace_period: 20s
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3773/').then(()=>process.exit(0)).catch(()=>process.exit(1))"
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 20s
+
+volumes:
+  t3-state:
+  codex-state:

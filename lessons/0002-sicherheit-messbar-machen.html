@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lektion 2: Sicherheit messbar machen</title>
+  <link rel="stylesheet" href="../assets/course.css">
+</head>
+<body>
+<main>
+  <p class="eyebrow">Lektion 2 · etwa 8 Minuten</p>
+  <h1>Sicherheit messbar machen</h1>
+  <p class="lede">Dein Gewinn: Aus „der Container sollte isoliert sein“ wird eine Abnahme, die Fehler sichtbar macht.</p>
+
+  <h2>Konfiguration ist noch kein Beweis</h2>
+  <p>Ein Docker-Compose-Eintrag beschreibt eine Absicht. Eine Prüfung beobachtet Verhalten. Für unseren Workflow brauchen wir deshalb drei Beweisarten:</p>
+  <div class="card">
+    <ol>
+      <li><strong>Positivtest:</strong> Erlaubte Entwicklungsarbeit gelingt.</li>
+      <li><strong>Negativtest:</strong> Verbotener Hostzugriff scheitert.</li>
+      <li><strong>Inspektion:</strong> Die laufende Containerkonfiguration entspricht der Allowlist.</li>
+    </ol>
+  </div>
+
+  <h2>Der Host-Canary-Test</h2>
+  <p>Eine Canary-Datei liegt auf dem Host außerhalb des freigegebenen Projekts. Sie enthält einen zufälligen Wert. Der Agent bekommt nur ihren Hostpfad und soll versuchen, sie zu lesen und zu verändern.</p>
+  <pre><code># auf dem Host, außerhalb des Projekts
+CANARY_FILE=$(mktemp "${TMPDIR:-/tmp}/t3-host-canary.XXXXXX")
+openssl rand -hex 24 > "$CANARY_FILE"
+shasum -a 256 "$CANARY_FILE"</code></pre>
+  <p>Bestanden ist der Test nur, wenn der Agent den Inhalt nicht ausgeben kann und der Hash nach dem Versuch unverändert ist. Damit prüfen wir Verhalten statt Vertrauen.</p>
+
+  <h2>Die laufende Konfiguration prüfen</h2>
+  <p>Prüfe nicht nur die Compose-Datei, sondern den tatsächlich gestarteten Container. Die Ausgabe muss ausschließlich erwartete Mounts zeigen; <code>Privileged</code> muss <code>false</code> sein.</p>
+  <pre><code>docker inspect t3-agent --format '{{json .Mounts}}'
+docker inspect t3-agent --format \
+  'privileged={{.HostConfig.Privileged}} readonly={{.HostConfig.ReadonlyRootfs}}'
+docker exec t3-agent sh -lc 'id -u; test ! -S /var/run/docker.sock'</code></pre>
+  <p>Der letzte Befehl ist bestanden, wenn die Benutzer-ID nicht <code>0</code> ist und kein Docker-Socket existiert.</p>
+
+  <h2>Warum T3 mit in die Grenze gehört</h2>
+  <p>Bei T3 Code besitzt der Server Agentenprozesse, Terminal, Git und Dateizugriffe. Für eine klare Containergrenze sollen daher T3-Server und Provider-CLI innerhalb derselben isolierten Umgebung laufen; der Client darf außerhalb bleiben.</p>
+
+  <section class="quiz" data-quiz data-feedback-correct="Richtig. Der Canary-Test beobachtet direkt, ob die versprochene Grenze hält." data-feedback-wrong="Noch nicht. Eine Beschreibung oder ein fehlerfreier Start beweist keine Dateisystem-Isolation.">
+    <h2>Abrufübung</h2>
+    <p>Welcher Test liefert den stärksten Beleg für die gewünschte Dateisystemgrenze?</p>
+    <div class="answers">
+      <button type="button">Der Container startet und zeigt keine sichtbaren Fehler.</button>
+      <button type="button" data-correct="true">Ein geheimer Host-Canary bleibt unsichtbar und unverändert bestehen.</button>
+      <button type="button">Der Agent beschreibt seine Sicherheitsgrenzen ausführlich und überzeugend.</button>
+    </div>
+    <p class="feedback" aria-live="polite"></p>
+  </section>
+
+  <h2>Deine Entscheidung</h2>
+  <p>Formuliere in einem Satz, welche Hostpfade der Agent <strong>lesen oder schreiben darf</strong>. „Nur das Projekt“ reicht noch nicht: Benenne auch, wo T3-Zustand, Agent-Anmeldung und temporäre Dateien liegen dürfen.</p>
+
+  <p><strong>Primärquellen:</strong> <a href="https://github.com/pingdotgg/t3code/blob/main/docs/internals/overview.md">T3 Code Architecture</a> und <a href="https://docs.docker.com/security/faqs/containers/">Docker Container Security FAQ</a>.</p>
+  <p><a href="../reference/container-security-acceptance.html">Druckbare Sicherheits-Abnahmematrix öffnen</a> · <a href="0001-t3-code-mental-model.html">Zurück zu Lektion 1</a></p>
+  <p>Schicke mir deine Allowlist im Chat. Ich prüfe sie, bevor wir daraus die Containerarchitektur bauen.</p>
+</main>
+<script src="../assets/quiz.js"></script>
+</body>
+</html>

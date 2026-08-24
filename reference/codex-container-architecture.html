@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>T3 Code + Codex – Containerarchitektur</title>
+  <link rel="stylesheet" href="../assets/course.css">
+</head>
+<body>
+<main>
+  <p class="eyebrow">Architektur-Kurzreferenz</p>
+  <h1>T3 Code + Codex im Container</h1>
+
+  <div class="flow" aria-label="Komponentenfluss">
+    <strong>T3-Client</strong><span>→</span><strong>T3-Server</strong><span>→</span><strong>Codex CLI</strong>
+  </div>
+  <p>Der Client bleibt auf dem Host. T3-Server und Codex CLI teilen dieselbe gehärtete Containergrenze, weil der T3-Server Agentenprozesse, Terminal, Git und Dateisystemoperationen ausführt.</p>
+
+  <table>
+    <thead><tr><th>Containerpfad</th><th>Speicherart</th><th>Zweck</th></tr></thead>
+    <tbody>
+      <tr><td><code>/workspace</code></td><td>ein Bind Mount, rw</td><td>ein ausdrücklich gewähltes Projekt</td></tr>
+      <tr><td><code>/var/lib/t3</code></td><td>Docker-Volume, rw</td><td>T3-Zustand, Threads und Logs</td></tr>
+      <tr><td><code>/var/lib/codex</code></td><td>Docker-Volume, rw</td><td><code>CODEX_HOME</code>, Anmeldung und Konfiguration</td></tr>
+      <tr><td><code>/tmp</code></td><td>tmpfs, rw</td><td>flüchtige Arbeitsdateien</td></tr>
+      <tr><td>übrige Root-Dateien</td><td>Image, ro</td><td>Laufzeit und Programme</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Netzwerkgrenze</h2>
+  <p>Host-Port 3774 wird nur an <code>127.0.0.1</code> veröffentlicht und auf Port 3773 im Container weitergeleitet. Damit kollidiert das Profil nicht mit dem lokalen Backend der T3-Code-Desktop-App auf Host-Port 3773. Der Container nutzt ein gewöhnliches Bridge-Netzwerk statt des Host-Netzwerks. Ausgehender Netzwerkzugriff bleibt zunächst erlaubt, weil Codex den OpenAI-Dienst erreichen muss; eine Egress-Allowlist ist eine spätere Härtungsstufe.</p>
+
+  <h2>Prozesshärtung</h2>
+  <ul>
+    <li>Nicht-root-Benutzer mit UID 10001.</li>
+    <li>Nur lesbares Root-Dateisystem.</li>
+    <li>Alle Linux-Capabilities entfernt.</li>
+    <li><code>no-new-privileges</code> aktiviert.</li>
+    <li>Kein Docker-Socket und kein Host-Netzwerk.</li>
+  </ul>
+
+  <p>Quellen: <a href="https://github.com/pingdotgg/t3code/blob/main/docs/internals/overview.md">T3 Code Architecture</a>, <a href="https://learn.chatgpt.com/docs/auth">OpenAI Docs: Authentication</a>, <a href="https://docs.docker.com/engine/security/">Docker Engine Security</a>.</p>
+</main>
+</body>
+</html>
