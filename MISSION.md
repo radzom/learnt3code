@@ -5,7 +5,7 @@ Ich möchte T3 Code als zentrale Arbeitsoberfläche für einen agentischen Entwi
 
 ## Success looks like
 - Ein T3-Client kann einen containerisierten T3-Server samt Coding-Agent erreichen und bedienen.
-- Der Agent kann im freigegebenen Projekt entwickeln, Tests ausführen und Git-Diffs erzeugen.
+- Der Agent kann in aus GitHub geklonten Repository-Arbeitskopien entwickeln, Tests ausführen, Git-Diffs erzeugen und Pull Requests anlegen.
 - Negative Tests belegen, dass Hostdateien außerhalb der erlaubten Mounts weder gelesen noch verändert werden können.
 - Die Containerkonfiguration ist reproduzierbar, minimal privilegiert und ohne eingebundenen Docker-Socket.
 - Der Workflow unterstützt App-Entwicklung, Codeverständnis, Automatisierung und professionelle Reviews.
@@ -13,7 +13,7 @@ Ich möchte T3 Code als zentrale Arbeitsoberfläche für einen agentischen Entwi
 ## Constraints
 - Kurze, praktische Lektionen mit jeweils einem direkt sichtbaren Ergebnis.
 - Sicherheit wird durch beobachtbare Positiv- und Negativtests belegt, nicht nur durch Konfiguration angenommen.
-- Nur ausdrücklich erlaubte Projekt-, Zustands- und Credential-Speicher dürfen schreibbar sein.
+- Nur ausdrücklich erlaubte Repository-, Zustands- und Credential-Volumes dürfen schreibbar sein; Host-Projektpfade und Host-SSH-Schlüssel bleiben ungemountet.
 - Die Übungen und die erste Referenzimplementierung entstehen in diesem Workspace.
 
 ## Out of scope

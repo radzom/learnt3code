@@ -2,7 +2,6 @@
 set -eu
 
 service_name="${T3_SERVICE_NAME:-t3-codex}"
-project_root="${T3_PROJECT_PATH:-.}"
 container_id="$(docker compose ps -q "$service_name")"
 
 if [ -z "$container_id" ]; then
@@ -47,24 +46,28 @@ actual_mounts="$(docker inspect "$container_id" --format '{{range .Mounts}}{{pri
   | sed '/^[[:space:]]*$/d' \
   | sort)"
 expected_mounts="$(printf '%s\n' \
-  'bind /workspace' \
+  'volume /workspace' \
   'volume /var/lib/codex' \
+  'volume /var/lib/github-cli' \
   'volume /var/lib/t3' | sort)"
 [ "$actual_mounts" = "$expected_mounts" ] \
   || fail "mount allowlist differs; found:\n$actual_mounts"
-pass "mount allowlist contains only workspace, T3 state, and Codex state"
+pass "mount allowlist contains only repositories, T3 state, Codex state, and GitHub state"
 
 tmpfs_config="$(docker inspect "$container_id" --format '{{json .HostConfig.Tmpfs}}')"
 printf '%s' "$tmpfs_config" | grep -q '"/tmp"' || fail "/tmp is not a tmpfs"
 pass "/tmp is backed by tmpfs"
 
 host_canary="$(mktemp "${TMPDIR:-/tmp}/t3-host-canary.XXXXXX")"
-project_probe_name=".t3-container-probe.$$"
-project_probe_host="$project_root/$project_probe_name"
+probe_name=".t3-container-probe.$$"
 
 cleanup() {
-  rm -f "$host_canary" "$project_probe_host"
-  docker exec "$container_id" rm -f "/workspace/$project_probe_name" >/dev/null 2>&1 || true
+  rm -f "$host_canary"
+  docker exec "$container_id" rm -f \
+    "/workspace/$probe_name" \
+    "/var/lib/t3/$probe_name" \
+    "/var/lib/codex/$probe_name" \
+    "/var/lib/github-cli/$probe_name" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT INT TERM
 
@@ -76,11 +79,17 @@ if docker exec "$container_id" test -e "$host_canary"; then
 fi
 pass "host-only canary is invisible"
 
-docker exec "$container_id" sh -lc "printf container-write-ok > '/workspace/$project_probe_name'" \
-  || fail "container cannot write to the project"
-[ "$(cat "$project_probe_host")" = "container-write-ok" ] \
-  || fail "project write did not reach the host bind mount"
-pass "project bind mount is writable"
+for writable_path in \
+  /workspace \
+  /var/lib/t3 \
+  /var/lib/codex \
+  /var/lib/github-cli
+do
+  docker exec "$container_id" sh -lc \
+    "printf container-write-ok > '$writable_path/$probe_name' && test \"\$(cat '$writable_path/$probe_name')\" = container-write-ok" \
+    || fail "$writable_path is not writable"
+  pass "$writable_path is writable"
+done
 
 canary_hash_after="$(shasum -a 256 "$host_canary")"
 [ "$canary_hash_before" = "$canary_hash_after" ] \

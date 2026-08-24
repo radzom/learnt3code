@@ -13,6 +13,8 @@ services:
       HOME: /home/agent
       T3CODE_HOME: /var/lib/t3
       CODEX_HOME: /var/lib/codex
+      GH_CONFIG_DIR: /var/lib/github-cli
+      GIT_CONFIG_GLOBAL: /var/lib/github-cli/gitconfig
       NPM_CONFIG_CACHE: /tmp/npm-cache
     ports:
       - name: t3-web
@@ -21,17 +23,18 @@ services:
         host_ip: 127.0.0.1
         protocol: tcp
     volumes:
-      - type: bind
-        source: "${T3_PROJECT_PATH:-.}"
+      - type: volume
+        source: repositories
         target: /workspace
-        bind:
-          create_host_path: false
       - type: volume
         source: t3-state
         target: /var/lib/t3
       - type: volume
         source: codex-state
         target: /var/lib/codex
+      - type: volume
+        source: github-state
+        target: /var/lib/github-cli
     tmpfs:
       - /tmp:rw,noexec,nosuid,nodev,size=512m,uid=10001,gid=10001,mode=1777
     read_only: true
@@ -55,5 +58,7 @@ services:
       start_period: 20s
 
 volumes:
+  repositories:
   t3-state:
   codex-state:
+  github-state:
